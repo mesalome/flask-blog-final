@@ -50,20 +50,22 @@ To get this project up and running, follow these steps:
 
 5. Create a local PostgreSQL database named flask_db with the following settings:
 
-   Host: localhost
-   Port: 5432
-   User: postgres
-   Password: password
-   Database: flask_db
+   Host: localhost <br /> 
+   Port: 5432 <br /> 
+   User: postgres <br /> 
+   Password: password <br /> 
+   Database: flask_db <br /> 
 ## Running the Application
 6. Ensure that the database settings in your `config.py` file match the configuration of your local PostgreSQL database (`flask_db`). You can find the `config.py` file in your Flask application's codebase.
 
-7. Run the following commands to apply migrations and create database tables:
+7. Run the following commands to apply migrations and create database tables: <br /> 
 (you might be asked to run ```export APP_SETTINGS=config.Config``` before this  )
 
-   ```flask db init
+   ```bash 
+   flask db init
    flask db migrate
-   flask db upgrade```
+   flask db upgrade 
+   ```
 
 To start the Flask application, run the following commands:
 
