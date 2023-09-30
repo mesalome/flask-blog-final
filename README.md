@@ -48,8 +48,22 @@ To get this project up and running, follow these steps:
 
    ```pip freeze > requirements.txt```
 
+5. Create a local PostgreSQL database named flask_db with the following settings:
+
+   Host: localhost
+   Port: 5432
+   User: postgres
+   Password: password
 
 ## Running the Application
+6. Ensure that the database settings in your `config.py` file match the configuration of your local PostgreSQL database (`flask_db`). You can find the `config.py` file in your Flask application's codebase.
+
+7. Run the following commands to apply migrations and create database tables:
+
+
+   ```flask db init
+   flask db migrate
+   flask db upgrade```
 
 To start the Flask application, run the following commands:
 
