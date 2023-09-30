@@ -6,83 +6,66 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 import psycopg2
 from app.db import get_db
-
+from .validations.validate_auth import validate_auth_form
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
     if request.method == 'POST':
-        username = request.form['username'].lower()
-        first_name = request.form['first_name'].strip()
-        last_name = request.form['last_name'].strip()
-        email = request.form['email'].strip()
-        password = request.form['password']
-        db = get_db()
-        error = None
+        post_data = {
+            'username': request.form.get('username').lower(),
+            'first_name': request.form.get('first_name').strip(),
+            'last_name': request.form.get('last_name').strip(),
+            'email': request.form.get('email').strip(),
+            'password': request.form.get('password'),
+        }
 
-        spaces_in_username = re.search(' ', username)
-        spaces_in_password = re.search(' ', password)
-        
-        def strong_password(text):
-            return re.search(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*()_\-+={[}\]|:;\"'<,>.?/]).{8,}$", text)
-        
-        if not username:
-            error = 'Username is required.'
-        elif spaces_in_username:
-            error = "Username can't contain spaces."
-        elif not first_name:
-            error = 'First Name is required.'
-        elif not last_name:
-            error = 'First Name is required.'
-        elif not email:
-            error = 'Email is required.'
-        elif not password:
-            error = 'Password is required.'
-        elif spaces_in_password:
-            error = "Password can't contain spaces."
-        elif len(password) < 8:
-            error = "Password must contain at least 8 characters."
-        elif not strong_password(password):
-            error = "Password must contain upper and lower case letters, numbers, and special characters."
+        # Using validate_auth_form function to validate form data
+        error = validate_auth_form(post_data)
 
         if error is None:
+            db = get_db()
             try:
-                cursor = db.cursor()
-                cursor.execute(
-                    "INSERT INTO users (username, first_name, last_name, email, password) VALUES (%s, %s, %s, %s, %s)",
-                    (username, first_name, last_name, email, generate_password_hash(password)),
-                )
-                db.commit()
-                cursor.close()
-            except psycopg2.IntegrityError:
-                error = f"User {username} is already registered."
-            else:
-                cursor = db.cursor()
-                cursor.execute("SELECT * FROM groups")
-                available_groups = cursor.fetchall()
-                cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
-                user_id = cursor.fetchone()
-                for group in available_groups:
-                    group_id = group[0]
-                    field_name = f"group_{group_id}"
-                    if field_name in request.form and request.form[field_name] == "on":
-                        cursor.execute(
-                            "INSERT INTO user_group_association (user_id, group_id) VALUES (%s, %s)",
-                            (user_id, group_id)
-                        )
-                
-                db.commit()
-                cursor.close()
+                with db.cursor() as cursor:
+                    cursor.execute(
+                        "INSERT INTO users (username, first_name, last_name, email, password) VALUES (%s, %s, %s, %s, %s)",
+                        (post_data['username'], post_data['first_name'], post_data['last_name'], post_data['email'], generate_password_hash(post_data['password'])),
+                    )
+                    
+                    db.commit()
+                    
+                    cursor.execute("SELECT * FROM groups")
+                    available_groups = cursor.fetchall()
+                    cursor.execute("SELECT id FROM users WHERE username = %s", (post_data['username'],))
+                    user_id = cursor.fetchone()
+                    for group in available_groups:
+                        group_id = group[0]
+                        field_name = f"group_{group_id}"
+                        if field_name in request.form and request.form[field_name] == "on":
+                            cursor.execute(
+                                "INSERT INTO user_group_association (user_id, group_id) VALUES (%s, %s)",
+                                (user_id, group_id)
+                            )
+                    
+                    db.commit()
+
                 return redirect(url_for("auth.login"))
-        
+            except psycopg2.IntegrityError:
+                error = f"User {post_data['username']} is already registered."
+                db.rollback()  
+            except Exception as e:
+                error = str(e)
+                db.rollback() 
         flash(error, "danger")
 
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM groups")
-    groups = cursor.fetchall()
+    with db.cursor() as cursor:
+        cursor.execute("SELECT * FROM groups")
+        groups = cursor.fetchall()
+
     return render_template('auth/register.html', groups=groups)
+
 
 
 @bp.route('/login', methods=('GET', 'POST'))

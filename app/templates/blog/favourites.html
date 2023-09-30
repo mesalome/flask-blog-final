@@ -10,8 +10,9 @@
 {% block content %}
   <div class="album py-5 bg-body-tertiary">
     <div class="container">
+      {%if posts %}
       <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-        {%if posts %} {% for post in posts %}
+         {% for post in posts %}
         <div class="col" >
           <div class="card shadow-sm">
             <img src="../static/images/quantori_logo_blog.png" alt="{{ post[1] }}" >
@@ -30,16 +31,19 @@
                 <div class="btn-group">
                   {% if g.user and g.user[0] == post[6] %}
                     <a href="{{ url_for('blog.update', id=post[0]) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                  {% endif %}
-                </div>
+                  {% endif %}</div>
                 <small class="text-body-secondary"></small>
               </div>
             </div>
           </div>
         </div>
         {% endfor %}
-        {% endif %}
       </div>
+      {% else %}
+      <div class="">
+        <h4>You don't have favourite blogs yet</h4>
+      </div>
+      {% endif %}
       <hr>
     </div>
   </div>

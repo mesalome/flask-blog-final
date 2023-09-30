@@ -7,7 +7,7 @@ from app.auth import login_required
 from app.db import get_db
 from datetime import datetime
 import io
-import base64 
+from .validations.validate_blog import validate_blog_form
 
 bp = Blueprint('blog', __name__, url_prefix='/blog')
 
@@ -51,17 +51,16 @@ def favourites():
 @login_required
 def create():
     if request.method == 'POST':
-        title = request.form['title']
-        content = request.form['content']
-        created = datetime.utcnow()
+        blog_form= {
+            'title': request.form.get('title').strip(),
+            'content': request.form.get('content').strip(),
+            'created': datetime.utcnow()
+        }
 
         error = None
 
-        if not title:
-            error = 'Title is required.'
-        
-        if not content:
-            error = 'Content is required.'
+        # Using validate_blog_form function to validate form data
+        error = validate_blog_form(blog_form)
 
         if error is not None:
             flash(error, "danger")
@@ -72,7 +71,7 @@ def create():
             cursor.execute(
                 'INSERT INTO posts (title, content, created, user_id)'
                 ' VALUES (%s, %s, %s, %s)',
-                (title, content, created, g.user[0])
+                (blog_form['title'], blog_form['content'], blog_form['created'], g.user[0])
             )
             db.commit()
             cursor.close()

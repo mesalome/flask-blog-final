@@ -28,3 +28,7 @@
 .remove_line{
   text-decoration:none
 }
+
+.wrap-text {
+  word-wrap: break-word;
+}
