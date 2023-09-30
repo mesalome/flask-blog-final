@@ -14,9 +14,9 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 def register():
     if request.method == 'POST':
         username = request.form['username'].lower()
-        first_name = request.form['first_name']
-        last_name = request.form['last_name']
-        email = request.form['email']
+        first_name = request.form['first_name'].strip()
+        last_name = request.form['last_name'].strip()
+        email = request.form['email'].strip()
         password = request.form['password']
         db = get_db()
         error = None
@@ -31,6 +31,12 @@ def register():
             error = 'Username is required.'
         elif spaces_in_username:
             error = "Username can't contain spaces."
+        elif not first_name:
+            error = 'First Name is required.'
+        elif not last_name:
+            error = 'First Name is required.'
+        elif not email:
+            error = 'Email is required.'
         elif not password:
             error = 'Password is required.'
         elif spaces_in_password:
